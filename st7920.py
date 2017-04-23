@@ -2,6 +2,12 @@ from machine import Pin, SPI
 from time import sleep
 import gc
 
+def report_collect(msg):
+    heap = gc.mem_free()
+    gc.collect()
+    print(msg.format(heap - gc.mem_free()))
+    gc.collect()
+
 # dimension framebuffer
 rowBound = 64       # bytearray 'rows' - 64 rows -> 64bits
 colBound = 128//8   # 'cols' in each bytearray - 16 bytes -> 128bits
@@ -203,7 +209,11 @@ class Screen:
         self.select(True)
 
         for i in range(dy1, dy2 + 1):
+            gc.collect()
+
             self.send_address(0x80 + i % 32, 0x80 + ((dx1 // 16) + (8 if i >= 32 else 0)))
+            report_collect("Address send allocated: {}")
+
             self.send_data(self.fbuff[i][dx1 // 16:(dx2 // 8) + 1])
 
         self.select(False)
